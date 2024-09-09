@@ -878,6 +878,15 @@ namespace Microsoft.Testing.Platform.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to http server host.
+        /// </summary>
+        internal static string PlatformCommandLineHttpName {
+            get {
+                return ResourceManager.GetString("PlatformCommandLineHttpName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Do not report non successful exit value for specific exit codes
         ///(e.g. &apos;--ignore-exit-code 8;9&apos; ignore exit code 8 and 9 and will return 0 in these case).
         /// </summary>

@@ -468,6 +468,11 @@ Os valores disponíveis são 'Rastreamento', 'Depuração', 'Informação', 'Avi
         <target state="translated">Mostrar a ajuda da linha de comando.</target>
         <note />
       </trans-unit>
+      <trans-unit id="PlatformCommandLineHttpName">
+        <source>http server host</source>
+        <target state="new">http server host</target>
+        <note />
+      </trans-unit>
       <trans-unit id="PlatformCommandLineIgnoreExitCodeOptionDescription">
         <source>Do not report non successful exit value for specific exit codes
 (e.g. '--ignore-exit-code 8;9' ignore exit code 8 and 9 and will return 0 in these case)</source>

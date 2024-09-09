@@ -631,4 +631,7 @@ Takes one argument as string in the format &lt;value&gt;[h|m|s] where 'value' is
   <data name="MissingClientPortFoJsonRpc" xml:space="preserve">
     <value>Expected --client-port when jsonRpc protocol is used.</value>
   </data>
+  <data name="PlatformCommandLineHttpName" xml:space="preserve">
+    <value>http server host</value>
+  </data>
 </root>

@@ -468,6 +468,11 @@ Les valeurs disponibles sont « Trace », « Debug », « Information », 
         <target state="translated">Afficher l’aide de la ligne de commande.</target>
         <note />
       </trans-unit>
+      <trans-unit id="PlatformCommandLineHttpName">
+        <source>http server host</source>
+        <target state="new">http server host</target>
+        <note />
+      </trans-unit>
       <trans-unit id="PlatformCommandLineIgnoreExitCodeOptionDescription">
         <source>Do not report non successful exit value for specific exit codes
 (e.g. '--ignore-exit-code 8;9' ignore exit code 8 and 9 and will return 0 in these case)</source>

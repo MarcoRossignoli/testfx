@@ -38,6 +38,8 @@ internal sealed class PlatformCommandLineProvider : ICommandLineOptionsProvider
     public const string JsonRpcProtocolName = "jsonrpc";
     public const string DotNetTestPipeOptionKey = "dotnet-test-pipe";
     public const string DotnetTestCliProtocolName = "dotnettestcli";
+    public const string HttpProtocolName = "http";
+    public const string HttpHostOptionKey = "--http-hostname";
 
     private static readonly string[] VerbosityOptions = ["Trace", "Debug", "Information", "Warning", "Error", "Critical"];
 
@@ -69,7 +71,8 @@ internal sealed class PlatformCommandLineProvider : ICommandLineOptionsProvider
         new(VSTestAdapterModeOptionKey, PlatformResources.PlatformCommandLineVSTestAdapterModeOptionDescription, ArgumentArity.Zero, true, isBuiltIn: true),
         new(NoBannerOptionKey, PlatformResources.PlatformCommandLineNoBannerOptionDescription, ArgumentArity.ZeroOrOne, true, isBuiltIn: true),
         new(TestHostControllerPIDOptionKey, PlatformResources.PlatformCommandLineTestHostControllerPIDOptionDescription, ArgumentArity.ZeroOrOne, true, isBuiltIn: true),
-        new(DotNetTestPipeOptionKey, PlatformResources.PlatformCommandLineDotnetTestPipe, ArgumentArity.ExactlyOne, true, isBuiltIn: true)
+        new(DotNetTestPipeOptionKey, PlatformResources.PlatformCommandLineDotnetTestPipe, ArgumentArity.ExactlyOne, true, isBuiltIn: true),
+        new(HttpHostOptionKey, PlatformResources.PlatformCommandLineHttpName, ArgumentArity.ExactlyOne, true, isBuiltIn: true),
     ];
 
     /// <inheritdoc />

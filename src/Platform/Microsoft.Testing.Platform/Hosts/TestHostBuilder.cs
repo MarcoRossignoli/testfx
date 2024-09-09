@@ -349,8 +349,14 @@ internal class TestHostBuilder(IFileSystem fileSystem, IRuntimeFeature runtimeFe
             return toolsTestHost;
         }
 
-        var pushOnlyProtocol = new DotnetTestConnection(commandLineHandler, processHandler, environment, _testApplicationModuleInfo, testApplicationCancellationTokenSource);
+        IPushOnlyProtocol pushOnlyProtocol = new DotnetTestConnection(commandLineHandler, processHandler, environment, _testApplicationModuleInfo, testApplicationCancellationTokenSource);
         await pushOnlyProtocol.AfterCommonServiceSetupAsync();
+
+        if (!pushOnlyProtocol.IsServerMode)
+        {
+            pushOnlyProtocol = new HttpServer(commandLineOptions);
+        }
+
         if (pushOnlyProtocol.IsServerMode)
         {
             serviceProvider.AddService(pushOnlyProtocol);
