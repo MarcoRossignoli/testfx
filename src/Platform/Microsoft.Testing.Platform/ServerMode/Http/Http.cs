@@ -22,10 +22,7 @@ internal class HttpServer : IPushOnlyProtocol
                                 httpHost?.Length == 1
                                 ;
 
-    public Task AfterCommonServiceSetupAsync()
-    {
-        return Task.CompletedTask;
-    }
+    public Task AfterCommonServiceSetupAsync() => Task.CompletedTask;
 
     public void Dispose() => throw new NotImplementedException();
 

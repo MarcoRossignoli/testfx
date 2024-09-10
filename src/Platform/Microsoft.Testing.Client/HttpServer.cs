@@ -82,8 +82,6 @@ internal class HttpServer : IAsyncDisposable
 
     ValueTask IAsyncDisposable.DisposeAsync() => throw new NotImplementedException();
 
-    private Task HandleMessageAsync(HttpListenerContext client)
-    {
-        return Task.CompletedTask;
-    }
+#pragma warning disable CA1822 // Mark members as static
+    private Task HandleMessageAsync(HttpListenerContext client) => Task.CompletedTask;
 }

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#pragma warning disable IDE0052 // Remove unread private members
+
 using System.Diagnostics;
 
 namespace Microsoft.Testing.Client;
@@ -65,9 +67,9 @@ public sealed class DiscoveryRequest : IAsyncDisposable
             {
                 // Start the server
                 _httpServer.StartListening();
-                var processStart = GetProcessStartInfo(_httpServer.GetHostName());
-                Process? process = Process.Start(processStart);
-                await process.WaitForExitAsync();
+                ProcessStartInfo processStart = GetProcessStartInfo(_httpServer.GetHostName()!);
+                var process = Process.Start(processStart);
+                await process!.WaitForExitAsync();
             }
             catch (Exception ex)
             {
@@ -76,7 +78,6 @@ public sealed class DiscoveryRequest : IAsyncDisposable
         });
 
     public Task<int> WaitCompletionAsync() => _completionSource.Task;
-
 
     ProcessStartInfo GetProcessStartInfo(string hostName)
     {
@@ -89,6 +90,7 @@ public sealed class DiscoveryRequest : IAsyncDisposable
         };
 
         return psi;
+    }
 
     public async ValueTask DisposeAsync()
     {
