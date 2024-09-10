@@ -5,6 +5,8 @@
 
 using System.Diagnostics;
 
+using Newtonsoft.Json;
+
 namespace Microsoft.Testing.Client;
 
 public class TestingApplication
@@ -43,61 +45,26 @@ public class TestingApplication
     }
 }
 
-public sealed class DiscoveryRequest : IAsyncDisposable
+public class DiscoveredNode
 {
-    private readonly string _executable;
-    private readonly TestingApplication _testingApplication;
-    private readonly TaskCompletionSource<int> _completionSource = new();
-    private readonly HttpServer _httpServer;
-    private bool _isDisposed;
+    [JsonProperty("node")]
+    public Node node { get; set; }
 
-    public event EventHandler<DiscoveredTestsEventArgs>? DiscoveredTests;
+    [JsonProperty("parent")]
+    public object parent { get; set; }
+}
 
-    internal DiscoveryRequest(string executable, TestingApplication testingApplication)
-    {
-        _executable = executable;
-        _testingApplication = testingApplication;
-        _httpServer = new HttpServer(testingApplication);
-    }
+public class Node
+{
+    [JsonProperty("uid")]
+    public string uid { get; set; }
 
-    public void Execute() =>
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                // Start the server
-                _httpServer.StartListening();
-                ProcessStartInfo processStart = GetProcessStartInfo(_httpServer.GetHostName()!);
-                var process = Process.Start(processStart);
-                await process!.WaitForExitAsync();
-            }
-            catch (Exception ex)
-            {
-                _completionSource.SetException(ex);
-            }
-        });
+    [JsonProperty("display-name")]
+    public string displayname { get; set; }
 
-    public Task<int> WaitCompletionAsync() => _completionSource.Task;
+    [JsonProperty("node-type")]
+    public string nodetype { get; set; }
 
-    ProcessStartInfo GetProcessStartInfo(string hostName)
-    {
-        var psi = new ProcessStartInfo
-        {
-            FileName = _executable,
-            Arguments = $"--list-tests --server http --http-hostname {hostName}",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        return psi;
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (!_isDisposed)
-        {
-            _isDisposed = true;
-            await _httpServer.DisposeAsync();
-        }
-    }
+    [JsonProperty("execution-state")]
+    public string executionstate { get; set; }
 }

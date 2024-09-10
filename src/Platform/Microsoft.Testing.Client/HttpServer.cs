@@ -2,28 +2,28 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace Microsoft.Testing.Client;
 
-internal class HttpServer : IAsyncDisposable
+internal class HttpServer : IDisposable
 {
-    private HttpListener? _listener;
+    private readonly byte[] _emptyResponse = System.Text.Encoding.UTF8.GetBytes("{}");
     private readonly TestingApplication _testingApplication;
+    private readonly CancellationTokenSource _stopListener = new();
+    private HttpListener? _listener;
     private Task? _connectionLoop;
+
+    public event EventHandler<OnMessageEventArgs>? OnMessage;
 
     public HttpServer(TestingApplication testingApplication) => _testingApplication = testingApplication;
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
-        if (_connectionLoop != null)
-        {
-            await _connectionLoop.WaitAsync(CancellationToken.None);
-        }
-
+        _stopListener.Cancel();
         _listener?.Stop();
         _listener?.Close();
+        _connectionLoop?.Wait();
     }
 
     public void StartListening()
@@ -38,14 +38,21 @@ internal class HttpServer : IAsyncDisposable
                 _testingApplication.LogMessage($"Failed to bind listener on a free port for test app {_testingApplication.Id}. Retrying...");
             }
 
-            _testingApplication.LogMessage($"Listening on {_listener.Prefixes.Single()} for test app {_testingApplication.Id}");
+            _testingApplication.LogMessage($"Listening on {_listener!.Prefixes.Single()} for test app {_testingApplication.Id}");
 
-            while (true)
+            try
             {
-                connectionLoopStarted.Set();
-                Debug.Assert(_listener != null, "Unexpected null _listener");
-                HttpListenerContext httpContext = await _listener.GetContextAsync().ConfigureAwait(false);
-                _ = HandleMessageAsync(httpContext);
+                while (!_stopListener.IsCancellationRequested)
+                {
+                    connectionLoopStarted.Set();
+                    Debug.Assert(_listener != null, "Unexpected null _listener");
+                    HttpListenerContext httpContext = await _listener!.GetContextAsync().ConfigureAwait(false);
+                    _ = HandleMessageAsync(httpContext);
+                }
+            }
+            catch (HttpListenerException)
+            {
+                // nothing to do here -- the listener disposes itself when Stop is called
             }
         });
 
@@ -54,7 +61,7 @@ internal class HttpServer : IAsyncDisposable
 
     public string? GetHostName() => _listener?.Prefixes.SingleOrDefault();
 
-    public static bool TryBindListenerOnFreePort([NotNullWhen(true)] out HttpListener? httpListener, out int port)
+    public static bool TryBindListenerOnFreePort(out HttpListener? httpListener, out int port)
     {
         // IANA suggested range for dynamic or private ports
         const int MinPort = 49215;
@@ -80,8 +87,33 @@ internal class HttpServer : IAsyncDisposable
         return false;
     }
 
-    ValueTask IAsyncDisposable.DisposeAsync() => throw new NotImplementedException();
+    private async Task HandleMessageAsync(HttpListenerContext context)
+    {
+        HttpListenerRequest request = context.Request;
+        using StreamReader reader = new(request.InputStream);
+        string requestContent = await reader.ReadToEndAsync().ConfigureAwait(false);
+        if (_testingApplication.EnableMessagesLogging)
+        {
+            _testingApplication.LogMessage($"Received message: {requestContent}");
+        }
 
-#pragma warning disable CA1822 // Mark members as static
-    private Task HandleMessageAsync(HttpListenerContext client) => Task.CompletedTask;
+        OnMessage?.Invoke(this, new OnMessageEventArgs(requestContent));
+
+        HttpListenerResponse response = context.Response;
+        response.ContentLength64 = _emptyResponse.Length;
+        Stream output = response.OutputStream;
+#if NETCOREAPP
+        await output.WriteAsync(_emptyResponse).ConfigureAwait(false);
+#else
+        await output.WriteAsync(_emptyResponse, 0, _emptyResponse.Length).ConfigureAwait(false);
+#endif
+        output.Close();
+    }
+}
+
+public class OnMessageEventArgs : EventArgs
+{
+    public string Message { get; }
+
+    public OnMessageEventArgs(string message) => Message = message;
 }

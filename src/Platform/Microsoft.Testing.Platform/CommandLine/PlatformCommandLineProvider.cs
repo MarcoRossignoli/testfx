@@ -39,7 +39,7 @@ internal sealed class PlatformCommandLineProvider : ICommandLineOptionsProvider
     public const string DotNetTestPipeOptionKey = "dotnet-test-pipe";
     public const string DotnetTestCliProtocolName = "dotnettestcli";
     public const string HttpProtocolName = "http";
-    public const string HttpHostOptionKey = "--http-hostname";
+    public const string HttpHostOptionKey = "http-hostname";
 
     private static readonly string[] VerbosityOptions = ["Trace", "Debug", "Information", "Warning", "Error", "Critical"];
 

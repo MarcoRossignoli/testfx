@@ -7,10 +7,11 @@ public class EntryPoint
 {
     public static async Task Main(string[] args)
     {
-        var testApp = new TestingApplication(@"C:\git\testfx\artifacts\bin\Playground\Debug\net8.0\Playground.exe");
-
-        testApp.EnableLogging = true;
-        testApp.EnableMessagesLogging = true;
+        var testApp = new TestingApplication(@"C:\git\testfx\artifacts\bin\Playground\Debug\net8.0\Playground.exe")
+        {
+            EnableLogging = true,
+            EnableMessagesLogging = false,
+        };
         testApp.LogReceived += (sender, e) => Console.WriteLine(e.Log);
         testApp.LogMessageReceived += (sender, e) => Console.WriteLine(e.Message);
 
@@ -18,9 +19,9 @@ public class EntryPoint
         DiscoveryRequest discoveryRequest = testApp.CreateDiscoveryRequest();
         discoveryRequest.DiscoveredTests += (sender, e) =>
         {
-            foreach (TestNode testNode in e.TestNodes)
+            foreach (DiscoveredNode node in e.DiscoveredNodes)
             {
-                Console.WriteLine(testNode);
+                Console.WriteLine($"Discovered node - {node.node.uid} {node.node.displayname}");
             }
         };
 
@@ -28,6 +29,6 @@ public class EntryPoint
         discoveryRequest.Execute();
 
         // Wait for completion
-        await discoveryRequest.WaitCompletionAsync();
+        await discoveryRequest.WaitCompletionAsync().ConfigureAwait(false);
     }
 }
