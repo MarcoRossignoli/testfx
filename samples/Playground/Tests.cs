@@ -17,6 +17,7 @@ public class TestClass
     [TestMethod]
     public void Test()
     {
+        Assert.AreEqual(1, 2);
     }
 
     [TestMethod]

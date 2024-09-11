@@ -4,6 +4,8 @@
 using System.Diagnostics;
 using System.Net;
 
+using Newtonsoft.Json;
+
 namespace Microsoft.Testing.Client;
 
 internal class HttpServer : IDisposable
@@ -13,10 +15,15 @@ internal class HttpServer : IDisposable
     private readonly CancellationTokenSource _stopListener = new();
     private HttpListener? _listener;
     private Task? _connectionLoop;
+    private string[]? _idFilter;
 
     public event EventHandler<OnMessageEventArgs>? OnMessage;
 
-    public HttpServer(TestingApplication testingApplication) => _testingApplication = testingApplication;
+    public HttpServer(TestingApplication testingApplication, string[]? idFilter = null)
+    {
+        _testingApplication = testingApplication;
+        _idFilter = idFilter;
+    }
 
     public void Dispose()
     {
@@ -97,17 +104,49 @@ internal class HttpServer : IDisposable
             _testingApplication.LogMessage($"Received message: {requestContent}");
         }
 
-        OnMessage?.Invoke(this, new OnMessageEventArgs(requestContent));
+        string? action = null;
 
-        HttpListenerResponse response = context.Response;
-        response.ContentLength64 = _emptyResponse.Length;
-        Stream output = response.OutputStream;
+        action = request.Url!.PathAndQuery switch
+        {
+            "/list-tests" => "list-tests",
+            "/run-tests" => "run-tests",
+            "/getFilters" => "getFilters",
+            _ => throw new InvalidOperationException("Unsupported action"),
+        };
+
+        OnMessage?.Invoke(this, new OnMessageEventArgs(requestContent, action!));
+
+        if (action == "getFilters")
+        {
+            string filters = JsonConvert.SerializeObject(Array.Empty<string>());
+            if (_idFilter is not null)
+            {
+                filters = JsonConvert.SerializeObject(_idFilter)!;
+            }
+
+            byte[] filtersBytes = System.Text.Encoding.UTF8.GetBytes(filters);
+            HttpListenerResponse response = context.Response;
+            response.ContentLength64 = filtersBytes.Length;
+            Stream output = response.OutputStream;
 #if NETCOREAPP
-        await output.WriteAsync(_emptyResponse).ConfigureAwait(false);
+            await output.WriteAsync(filtersBytes).ConfigureAwait(false);
 #else
-        await output.WriteAsync(_emptyResponse, 0, _emptyResponse.Length).ConfigureAwait(false);
+            await output.WriteAsync(filtersBytes, 0, filtersBytes.Length).ConfigureAwait(false);
 #endif
-        output.Close();
+            output.Close();
+        }
+        else
+        {
+            HttpListenerResponse response = context.Response;
+            response.ContentLength64 = _emptyResponse.Length;
+            Stream output = response.OutputStream;
+#if NETCOREAPP
+            await output.WriteAsync(_emptyResponse).ConfigureAwait(false);
+#else
+            await output.WriteAsync(_emptyResponse, 0, _emptyResponse.Length).ConfigureAwait(false);
+#endif
+            output.Close();
+        }
     }
 }
 
@@ -115,5 +154,11 @@ public class OnMessageEventArgs : EventArgs
 {
     public string Message { get; }
 
-    public OnMessageEventArgs(string message) => Message = message;
+    public string Action { get; }
+
+    public OnMessageEventArgs(string message, string action)
+    {
+        Message = message;
+        Action = action;
+    }
 }

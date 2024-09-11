@@ -3,9 +3,9 @@
 
 namespace Microsoft.Testing.Client;
 
-public class DiscoveredTestsEventArgs : EventArgs
+public class RanTestsEventArgs : EventArgs
 {
-    internal DiscoveredTestsEventArgs(TestNode[] discoveredNode) => DiscoveredNodes = discoveredNode;
+    internal RanTestsEventArgs(TestNode[] ranNode) => RanNodes = ranNode;
 
-    public TestNode[] DiscoveredNodes { get; }
+    public TestNode[] RanNodes { get; }
 }

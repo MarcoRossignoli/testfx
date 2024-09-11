@@ -15,20 +15,59 @@ public class EntryPoint
         testApp.LogReceived += (sender, e) => Console.WriteLine(e.Log);
         testApp.LogMessageReceived += (sender, e) => Console.WriteLine(e.Message);
 
-        // Discovery
+        // ============ Discovery ============
+        Console.WriteLine("============ Discovery ============");
         DiscoveryRequest discoveryRequest = testApp.CreateDiscoveryRequest();
+        var testId = new List<string>();
         discoveryRequest.DiscoveredTests += (sender, e) =>
         {
-            foreach (DiscoveredNode node in e.DiscoveredNodes)
+            foreach (TestNode node in e.DiscoveredNodes)
             {
-                Console.WriteLine($"Discovered node - {node.node.uid} {node.node.displayname}");
+                testId.Add(node.Node!.Uid!);
+                Console.WriteLine($"Discovered node - {node.Node!.Uid} {node.Node!.DisplayName}");
             }
         };
-
-        // Run
+        // Execute
         discoveryRequest.Execute();
-
         // Wait for completion
         await discoveryRequest.WaitCompletionAsync().ConfigureAwait(false);
+
+        // ============ Run ============
+        Console.WriteLine("============ Run ============");
+        RunRequest runRequest = testApp.CreateRunRequest();
+        runRequest.RanTests += (sender, e) =>
+        {
+            foreach (TestNode node in e.RanNodes)
+            {
+                Console.WriteLine($"Ran node - {node.Node!.Uid} {node.Node!.DisplayName} {node.Node!.ExecutionState}");
+                if (node.Node!.ExecutionState == "failed")
+                {
+                    Console.WriteLine($"Error message: {node.Node!.ErrorMessage}\n{node.Node!.ErrorStacktrace}");
+                }
+            }
+        };
+        // Execute
+        runRequest.Execute();
+        // Wait for completion
+        await runRequest.WaitCompletionAsync().ConfigureAwait(false);
+
+        // ============ Run filtered ============
+        Console.WriteLine("============ Run filtered ============");
+        RunRequest runFilteredRequest = testApp.CreateRunRequest(testId.Take(1).ToArray());
+        runFilteredRequest.RanTests += (sender, e) =>
+        {
+            foreach (TestNode node in e.RanNodes)
+            {
+                Console.WriteLine($"Ran node - {node.Node!.Uid} {node.Node!.DisplayName} {node.Node!.ExecutionState}");
+                if (node.Node!.ExecutionState == "failed")
+                {
+                    Console.WriteLine($"Error message: {node.Node!.ErrorMessage}\n{node.Node!.ErrorStacktrace}");
+                }
+            }
+        };
+        // Execute
+        runFilteredRequest.Execute();
+        // Wait for completion
+        await runFilteredRequest.WaitCompletionAsync().ConfigureAwait(false);
     }
 }

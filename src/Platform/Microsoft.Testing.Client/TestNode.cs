@@ -1,11 +1,15 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Newtonsoft.Json;
+
 namespace Microsoft.Testing.Client;
 
-public class DiscoveredTestsEventArgs : EventArgs
+public class TestNode
 {
-    internal DiscoveredTestsEventArgs(TestNode[] discoveredNode) => DiscoveredNodes = discoveredNode;
+    [JsonProperty("node")]
+    public Node? Node { get; set; }
 
-    public TestNode[] DiscoveredNodes { get; }
+    [JsonProperty("parent")]
+    public Node? Parent { get; set; }
 }

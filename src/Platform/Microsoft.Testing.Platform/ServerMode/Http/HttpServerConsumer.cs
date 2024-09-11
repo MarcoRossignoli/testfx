@@ -3,6 +3,7 @@
 
 using System.Text;
 
+using Microsoft.Testing.Platform.CommandLine;
 using Microsoft.Testing.Platform.Extensions.Messages;
 using Microsoft.Testing.Platform.Helpers;
 using Microsoft.Testing.Platform.ServerMode;
@@ -15,11 +16,15 @@ internal class HttpServerConsumer : IPushOnlyProtocolConsumer
     private readonly HttpServer _httpServer;
     private readonly Uri _uri;
     private readonly IMessageFormatter _messageFormatter = FormatterUtilities.CreateFormatter();
+    private HttpClient? _httpClient;
+    private ICommandLineOptions _commandLineOptions;
 
-    public HttpServerConsumer(HttpServer httpServer, Uri uri)
+    public HttpServerConsumer(HttpServer httpServer, Uri uri, HttpClient? httpClient, ICommandLineOptions commandLineOptions)
     {
         _httpServer = httpServer;
         _uri = uri;
+        _httpClient = httpClient;
+        _commandLineOptions = commandLineOptions;
     }
 
     public Type[] DataTypesConsumed => new[]
@@ -50,13 +55,14 @@ internal class HttpServerConsumer : IPushOnlyProtocolConsumer
 
     public async Task ConsumeAsync(IDataProducer dataProducer, IData value, CancellationToken cancellationToken)
     {
-        RoslynDebug.Assert(_httpServer._httpClient is not null);
+        RoslynDebug.Assert(_httpClient is not null);
 
+        Uri? uri = _commandLineOptions.IsOptionSet("list-tests") ? new Uri(_uri, "list-tests") : new Uri(_uri, "run-tests");
         switch (value)
         {
             case TestNodeUpdateMessage testNodeUpdateMessage:
                 string json = await _messageFormatter.SerializeAsync(testNodeUpdateMessage);
-                await _httpServer._httpClient.PostAsync(_uri, new StringContent(json, Encoding.UTF8, "application/json"), cancellationToken);
+                await _httpClient.PostAsync(uri, new StringContent(json, Encoding.UTF8, "application/json"), cancellationToken);
                 break;
         }
     }

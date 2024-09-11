@@ -7,17 +7,25 @@ using Newtonsoft.Json;
 
 namespace Microsoft.Testing.Client;
 
-public sealed class DiscoveryRequest
+public sealed class RunRequest
 {
     private readonly string _executable;
     private readonly TestingApplication _testingApplication;
     private readonly TaskCompletionSource<int> _completionSource = new();
+    private string[]? _idFilter;
 
-    public event EventHandler<DiscoveredTestsEventArgs>? DiscoveredTests;
+    public event EventHandler<RanTestsEventArgs>? RanTests;
 
-    internal DiscoveryRequest(string executable, TestingApplication testingApplication)
+    internal RunRequest(string executable, TestingApplication testingApplication)
     {
         _executable = executable;
+        _testingApplication = testingApplication;
+    }
+
+    public RunRequest(string executable, string[]? idFilter, TestingApplication testingApplication)
+    {
+        _executable = executable;
+        _idFilter = idFilter;
         _testingApplication = testingApplication;
     }
 
@@ -27,17 +35,17 @@ public sealed class DiscoveryRequest
             try
             {
                 // Start the server
-                var httpServer = new HttpServer(_testingApplication);
+                var httpServer = new HttpServer(_testingApplication, _idFilter);
                 httpServer.StartListening();
                 httpServer.OnMessage += (sender, e) =>
                 {
-                    if (e.Action != "list-tests")
+                    if (e.Action != "run-tests")
                     {
                         return;
                     }
 
                     TestNode discoveredNode = JsonConvert.DeserializeObject<TestNode>(e.Message)!;
-                    DiscoveredTests?.Invoke(this, new DiscoveredTestsEventArgs(new[] { discoveredNode }));
+                    RanTests?.Invoke(this, new RanTestsEventArgs(new[] { discoveredNode }));
                 };
 
                 ProcessStartInfo processStart = GetProcessStartInfo(httpServer.GetHostName()!);
@@ -88,7 +96,7 @@ public sealed class DiscoveryRequest
         var psi = new ProcessStartInfo
         {
             FileName = _executable,
-            Arguments = $"--list-tests --server http --http-hostname {hostName} --exit-on-process-exit {Process.GetCurrentProcess()!.Id!}",
+            Arguments = $"--server http --http-hostname {hostName} --exit-on-process-exit {Process.GetCurrentProcess()!.Id!}",
             UseShellExecute = false,
             CreateNoWindow = true,
         };
