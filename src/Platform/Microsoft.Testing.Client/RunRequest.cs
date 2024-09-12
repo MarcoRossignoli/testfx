@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 using Newtonsoft.Json;
@@ -13,6 +14,9 @@ public sealed class RunRequest
     private readonly TestingApplication _testingApplication;
     private readonly TaskCompletionSource<int> _completionSource = new();
     private readonly string[]? _idFilter;
+    private readonly ConcurrentBag<OnCancellationTokenEventArgs> _cancellationTokens = new();
+    private readonly object _cancelLock = new();
+    private bool _cancelled;
 
     public event EventHandler<RanTestsEventArgs>? RanTests;
 
@@ -27,6 +31,18 @@ public sealed class RunRequest
         _executable = executable;
         _idFilter = idFilter;
         _testingApplication = testingApplication;
+    }
+
+    public void Cancel()
+    {
+        lock (_cancelLock)
+        {
+            _cancelled = true;
+            foreach (OnCancellationTokenEventArgs cancellation in _cancellationTokens)
+            {
+                cancellation.CancelTheRequest();
+            }
+        }
     }
 
     public void Execute() =>
@@ -46,6 +62,29 @@ public sealed class RunRequest
 
                     TestNode discoveredNode = JsonConvert.DeserializeObject<TestNode>(e.Message)!;
                     RanTests?.Invoke(this, new RanTestsEventArgs(new[] { discoveredNode }));
+                };
+
+                httpServer.OnCancellationToken += (sender, e) =>
+                {
+                    lock (_cancelLock)
+                    {
+                        if (_cancelled)
+                        {
+                            e.CancelTheRequest();
+                        }
+                        else
+                        {
+                            _cancellationTokens.Add(e);
+                        }
+                    }
+                };
+
+                httpServer.OnExit += (sender, e) =>
+                {
+                    foreach (OnCancellationTokenEventArgs cancellation in _cancellationTokens)
+                    {
+                        cancellation.CloseTheRequest();
+                    }
                 };
 
                 ProcessStartInfo processStart = GetProcessStartInfo(httpServer.GetHostName()!);

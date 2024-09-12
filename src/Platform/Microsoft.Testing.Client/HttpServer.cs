@@ -10,14 +10,19 @@ namespace Microsoft.Testing.Client;
 
 internal sealed class HttpServer : IDisposable
 {
-    private readonly byte[] _emptyResponse = System.Text.Encoding.UTF8.GetBytes("{}");
+    private static readonly byte[] EmptyResponse = System.Text.Encoding.UTF8.GetBytes("{}");
     private readonly TestingApplication _testingApplication;
     private readonly CancellationTokenSource _stopListener = new();
     private readonly string[]? _idFilter;
     private HttpListener? _listener;
     private Task? _connectionLoop;
+    private bool _disposed;
 
     public event EventHandler<OnMessageEventArgs>? OnMessage;
+
+    public event EventHandler<OnCancellationTokenEventArgs>? OnCancellationToken;
+
+    public event EventHandler<OnExitEventArgs>? OnExit;
 
     public HttpServer(TestingApplication testingApplication, string[]? idFilter = null)
     {
@@ -27,10 +32,14 @@ internal sealed class HttpServer : IDisposable
 
     public void Dispose()
     {
-        _stopListener.Cancel();
-        _listener?.Stop();
-        _listener?.Close();
-        _connectionLoop?.Wait();
+        if (!_disposed)
+        {
+            _disposed = true;
+            _stopListener.Cancel();
+            _listener?.Stop();
+            _listener?.Close();
+            _connectionLoop?.Wait();
+        }
     }
 
     public void StartListening()
@@ -58,6 +67,10 @@ internal sealed class HttpServer : IDisposable
                 }
             }
             catch (HttpListenerException)
+            {
+                // nothing to do here -- the listener disposes itself when Stop is called
+            }
+            catch (ObjectDisposedException)
             {
                 // nothing to do here -- the listener disposes itself when Stop is called
             }
@@ -111,6 +124,8 @@ internal sealed class HttpServer : IDisposable
             "/list-tests" => "list-tests",
             "/run-tests" => "run-tests",
             "/getFilters" => "getFilters",
+            "/cancellationToken" => "cancellationToken",
+            "/exit" => "exit",
             _ => throw new InvalidOperationException("Unsupported action"),
         };
 
@@ -125,32 +140,44 @@ internal sealed class HttpServer : IDisposable
             }
 
             byte[] filtersBytes = System.Text.Encoding.UTF8.GetBytes(filters);
-            HttpListenerResponse response = context.Response;
-            response.ContentLength64 = filtersBytes.Length;
-            Stream output = response.OutputStream;
+            HttpListenerResponse filterResponse = context.Response;
+            filterResponse.ContentLength64 = filtersBytes.Length;
+            Stream filterOutput = filterResponse.OutputStream;
 #if NETCOREAPP
-            await output.WriteAsync(filtersBytes).ConfigureAwait(false);
+            await filterOutput.WriteAsync(filtersBytes).ConfigureAwait(false);
 #else
-            await output.WriteAsync(filtersBytes, 0, filtersBytes.Length).ConfigureAwait(false);
+            await filterOutput.WriteAsync(filtersBytes, 0, filtersBytes.Length).ConfigureAwait(false);
 #endif
-            output.Close();
+            filterOutput.Close();
+            return;
         }
-        else
+        else if (action == "cancellationToken")
         {
-            HttpListenerResponse response = context.Response;
-            response.ContentLength64 = _emptyResponse.Length;
-            Stream output = response.OutputStream;
-#if NETCOREAPP
-            await output.WriteAsync(_emptyResponse).ConfigureAwait(false);
-#else
-            await output.WriteAsync(_emptyResponse, 0, _emptyResponse.Length).ConfigureAwait(false);
-#endif
-            output.Close();
+            OnCancellationToken?.Invoke(this, new(context));
+            return;
         }
+        else if (action == "exit")
+        {
+            OnExit?.Invoke(this, new());
+        }
+
+        HttpListenerResponse response = context.Response;
+        response.ContentLength64 = EmptyResponse.Length;
+        Stream output = response.OutputStream;
+#if NETCOREAPP
+        await output.WriteAsync(EmptyResponse).ConfigureAwait(false);
+#else
+        await output.WriteAsync(EmptyResponse, 0, EmptyResponse.Length).ConfigureAwait(false);
+#endif
+        output.Close();
     }
 }
 
-public class OnMessageEventArgs : EventArgs
+public sealed class OnExitEventArgs : EventArgs
+{
+}
+
+public sealed class OnMessageEventArgs : EventArgs
 {
     public string Message { get; }
 
@@ -160,5 +187,71 @@ public class OnMessageEventArgs : EventArgs
     {
         Message = message;
         Action = action;
+    }
+}
+
+public sealed class OnCancellationTokenEventArgs : EventArgs
+{
+    private readonly object _contextConsumed = new();
+    private static readonly byte[] EmptyResponse = System.Text.Encoding.UTF8.GetBytes("{}");
+    private static readonly byte[] CancelResponse = System.Text.Encoding.UTF8.GetBytes("cancel");
+    private readonly HttpListenerContext _context;
+    private bool _consumed;
+
+    internal OnCancellationTokenEventArgs(HttpListenerContext context)
+        => _context = context;
+
+    public void CancelTheRequest()
+    {
+        if (_consumed)
+        {
+            return;
+        }
+
+        lock (_contextConsumed)
+        {
+            if (_consumed)
+            {
+                return;
+            }
+
+            HttpListenerResponse response = _context.Response;
+            response.ContentLength64 = CancelResponse.Length;
+            Stream output = response.OutputStream;
+#if NETCOREAPP
+            output.Write(CancelResponse);
+#else
+            output.Write(CancelResponse, 0, CancelResponse.Length);
+#endif
+            output.Close();
+            _consumed = true;
+        }
+    }
+
+    public void CloseTheRequest()
+    {
+        if (_consumed)
+        {
+            return;
+        }
+
+        lock (_contextConsumed)
+        {
+            if (_consumed)
+            {
+                return;
+            }
+
+            HttpListenerResponse response = _context.Response;
+            response.ContentLength64 = EmptyResponse.Length;
+            Stream output = response.OutputStream;
+#if NETCOREAPP
+            output.Write(EmptyResponse);
+#else
+            output.Write(EmptyResponse, 0, EmptyResponse.Length);
+#endif
+            output.Close();
+            _consumed = true;
+        }
     }
 }

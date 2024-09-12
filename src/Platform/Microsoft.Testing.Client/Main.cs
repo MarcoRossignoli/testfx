@@ -30,7 +30,7 @@ public class EntryPoint
         // Execute
         discoveryRequest.Execute();
         // Wait for completion
-        await discoveryRequest.WaitCompletionAsync().ConfigureAwait(false);
+        Console.WriteLine($"ExitCode: {await discoveryRequest.WaitCompletionAsync().ConfigureAwait(false)}");
 
         // ============ Run ============
         Console.WriteLine("============ Run ============");
@@ -49,7 +49,7 @@ public class EntryPoint
         // Execute
         runRequest.Execute();
         // Wait for completion
-        await runRequest.WaitCompletionAsync().ConfigureAwait(false);
+        Console.WriteLine($"ExitCode: {await runRequest.WaitCompletionAsync().ConfigureAwait(false)}");
 
         // ============ Run filtered ============
         Console.WriteLine("============ Run filtered ============");
@@ -68,6 +68,27 @@ public class EntryPoint
         // Execute
         runFilteredRequest.Execute();
         // Wait for completion
-        await runFilteredRequest.WaitCompletionAsync().ConfigureAwait(false);
+        Console.WriteLine($"ExitCode: {await runFilteredRequest.WaitCompletionAsync().ConfigureAwait(false)}");
+
+        // ============ Run and cancel ============
+        Console.WriteLine("============ Run and cancel ============");
+        RunRequest cancelRequest = testApp.CreateRunRequest();
+        cancelRequest.RanTests += (sender, e) =>
+        {
+            foreach (TestNode node in e.RanNodes)
+            {
+                Console.WriteLine($"Ran node - {node.Node!.Uid} {node.Node!.DisplayName} {node.Node!.ExecutionState}");
+                if (node.Node!.ExecutionState == "failed")
+                {
+                    Console.WriteLine($"Error message: {node.Node!.ErrorMessage}\n{node.Node!.ErrorStacktrace}");
+                }
+            }
+        };
+        // Execute
+        cancelRequest.Execute();
+        Thread.Sleep(2000);
+        cancelRequest.Cancel();
+        // Wait for completion
+        Console.WriteLine($"ExitCode: {await cancelRequest.WaitCompletionAsync().ConfigureAwait(false)}");
     }
 }

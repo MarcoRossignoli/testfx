@@ -18,13 +18,16 @@ internal class HttpServer : IPushOnlyProtocol
 {
     private readonly ICommandLineOptions _commandLineOptions;
     private readonly ServiceProvider _serviceProvider;
+    private readonly ITestApplicationCancellationTokenSource _testApplicationCancellationTokenSource;
     private HttpClient? _httpClient;
     private string? _httpHost;
+    private Task? _cancellationTokenTask;
 
-    public HttpServer(ICommandLineOptions commandLineOptions, ServiceProvider serviceProvider)
+    public HttpServer(ICommandLineOptions commandLineOptions, ServiceProvider serviceProvider, ITestApplicationCancellationTokenSource testApplicationCancellationTokenSource)
     {
         _commandLineOptions = commandLineOptions;
         _serviceProvider = serviceProvider;
+        _testApplicationCancellationTokenSource = testApplicationCancellationTokenSource;
     }
 
     public string Name => "http";
@@ -42,6 +45,37 @@ internal class HttpServer : IPushOnlyProtocol
             _httpClient = new HttpClient();
             _httpHost = httpHost[0];
         }
+
+        _cancellationTokenTask = Task.Run(async () =>
+        {
+            if (_commandLineOptions.IsOptionSet("--list-test"))
+            {
+                return;
+            }
+
+            string action = "poll";
+            while (action == "poll")
+            {
+                try
+                {
+                    HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, new Uri(new Uri(_httpHost!), "cancellationToken"));
+                    using HttpClient longPolling = new();
+                    longPolling.Timeout = Timeout.InfiniteTimeSpan;
+                    HttpResponseMessage httpResponse = await longPolling.SendAsync(httpRequestMessage);
+                    string receivedAction = await httpResponse.Content.ReadAsStringAsync();
+                    if (receivedAction == "cancel")
+                    {
+                        _testApplicationCancellationTokenSource.Cancel();
+                    }
+
+                    action = receivedAction;
+                }
+                catch (TaskCanceledException)
+                {
+                    // Timeout elapsed
+                }
+            }
+        });
 
         return Task.CompletedTask;
     }
@@ -67,6 +101,16 @@ internal class HttpServer : IPushOnlyProtocol
         }
 
         return true;
+    }
+
+    public async Task OnExitAsync()
+    {
+        if (_commandLineOptions.IsOptionSet("--list-tests"))
+        {
+            return;
+        }
+
+        await _httpClient!.GetStringAsync(new Uri(new Uri(_httpHost!), "exit")).ConfigureAwait(false);
     }
 
     public Task HelpInvokedAsync() => throw new NotImplementedException();

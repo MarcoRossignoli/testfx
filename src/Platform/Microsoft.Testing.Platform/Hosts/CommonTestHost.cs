@@ -26,7 +26,7 @@ internal abstract class CommonTestHost(ServiceProvider serviceProvider) : ITestH
     {
         CancellationToken testApplicationCancellationToken = ServiceProvider.GetTestApplicationCancellationTokenSource().CancellationToken;
 
-        int exitCode;
+        int exitCode = ExitCodes.GenericFailure;
         try
         {
             if (PushOnlyProtocol is null || PushOnlyProtocol?.IsServerMode == false)
@@ -35,19 +35,29 @@ internal abstract class CommonTestHost(ServiceProvider serviceProvider) : ITestH
                 return exitCode;
             }
 
-            RoslynDebug.Assert(PushOnlyProtocol is not null);
+            try
+            {
 
-            ITestApplicationModuleInfo testApplicationModuleInfo = serviceProvider.GetTestApplicationModuleInfo();
-            bool isValidProtocol = await PushOnlyProtocol.IsCompatibleProtocolAsync(GetHostType());
+                RoslynDebug.Assert(PushOnlyProtocol is not null);
 
-            exitCode = isValidProtocol
-                ? await RunTestAppAsync(testApplicationCancellationToken)
-                : ExitCodes.IncompatibleProtocolVersion;
+                ITestApplicationModuleInfo testApplicationModuleInfo = serviceProvider.GetTestApplicationModuleInfo();
+                bool isValidProtocol = await PushOnlyProtocol.IsCompatibleProtocolAsync(GetHostType());
+
+                exitCode = isValidProtocol
+                    ? await RunTestAppAsync(testApplicationCancellationToken)
+                    : ExitCodes.IncompatibleProtocolVersion;
+            }
+            finally
+            {
+                if (PushOnlyProtocol is not null)
+                {
+                    await PushOnlyProtocol.OnExitAsync();
+                }
+            }
         }
         catch (OperationCanceledException) when (testApplicationCancellationToken.IsCancellationRequested)
         {
             // We do nothing we're canceling
-            exitCode = ExitCodes.TestSessionAborted;
         }
         finally
         {
@@ -55,6 +65,11 @@ internal abstract class CommonTestHost(ServiceProvider serviceProvider) : ITestH
             await DisposeHelper.DisposeAsync(ServiceProvider.GetService<FileLoggerProvider>());
             await DisposeHelper.DisposeAsync(PushOnlyProtocol);
             await DisposeHelper.DisposeAsync(ServiceProvider.GetTestApplicationCancellationTokenSource());
+        }
+
+        if (testApplicationCancellationToken.IsCancellationRequested)
+        {
+            exitCode = ExitCodes.TestSessionAborted;
         }
 
         return exitCode;
@@ -217,7 +232,8 @@ internal abstract class CommonTestHost(ServiceProvider serviceProvider) : ITestH
             // We need to ensure that we won't dispose special services till the shutdown
             if (!isProcessShutdown &&
                 service is ITelemetryCollector or
-                 ITestApplicationLifecycleCallbacks)
+                 ITestApplicationLifecycleCallbacks or
+                 IPushOnlyProtocol)
             {
                 continue;
             }

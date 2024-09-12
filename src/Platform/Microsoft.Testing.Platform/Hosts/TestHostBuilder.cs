@@ -354,7 +354,7 @@ internal class TestHostBuilder(IFileSystem fileSystem, IRuntimeFeature runtimeFe
 
         if (!pushOnlyProtocol.IsServerMode)
         {
-            pushOnlyProtocol = new HttpServer(commandLineOptions, serviceProvider);
+            pushOnlyProtocol = new HttpServer(commandLineOptions, serviceProvider, testApplicationCancellationTokenSource);
             await pushOnlyProtocol.AfterCommonServiceSetupAsync();
         }
 
