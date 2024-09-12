@@ -80,7 +80,6 @@ internal class HttpServer : IPushOnlyProtocol
 #endif
 
     public void Dispose() => _httpClient?.Dispose();
-
 }
 
 internal class HttpProtocolTestExecutionFilterFactory : ITestExecutionFilterFactory

@@ -12,13 +12,8 @@ namespace Playground;
 [TestClass]
 public class TestClass
 {
-    public TestContext TestContext { get; set; }
-
     [TestMethod]
-    public void Test()
-    {
-        Assert.AreEqual(1, 2);
-    }
+    public void Test() => Assert.AreEqual(1, 2);
 
     [TestMethod]
     public void Test2()

@@ -88,7 +88,11 @@ public sealed class DiscoveryRequest
         var psi = new ProcessStartInfo
         {
             FileName = _executable,
+#if NETCOREAPP
+            Arguments = $"--list-tests --server http --http-hostname {hostName} --exit-on-process-exit {Environment.ProcessId}",
+#else
             Arguments = $"--list-tests --server http --http-hostname {hostName} --exit-on-process-exit {Process.GetCurrentProcess()!.Id!}",
+#endif
             UseShellExecute = false,
             CreateNoWindow = true,
         };

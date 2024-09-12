@@ -23,20 +23,20 @@ public class Node
     public DateTime TimestartUtc { get; set; }
 
     [JsonProperty("time.stoputc")]
-    public DateTime timestopUtc { get; set; }
+    public DateTime TimeStopUtc { get; set; }
 
     [JsonProperty("error.message")]
-    public string ErrorMessage { get; set; }
+    public string? ErrorMessage { get; set; }
 
     [JsonProperty("error.stacktrace")]
-    public string ErrorStacktrace { get; set; }
+    public string? ErrorStacktrace { get; set; }
 
     [JsonProperty("assert.actual")]
-    public string Assertactual { get; set; }
+    public string? Assertactual { get; set; }
 
     [JsonProperty("assert.expected")]
-    public string Assertexpected { get; set; }
+    public string? Assertexpected { get; set; }
 
     [JsonProperty("time.durationms")]
-    public float Timedurationms { get; set; }
+    public float TimeDurationMs { get; set; }
 }

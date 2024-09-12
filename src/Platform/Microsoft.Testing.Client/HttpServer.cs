@@ -8,14 +8,14 @@ using Newtonsoft.Json;
 
 namespace Microsoft.Testing.Client;
 
-internal class HttpServer : IDisposable
+internal sealed class HttpServer : IDisposable
 {
     private readonly byte[] _emptyResponse = System.Text.Encoding.UTF8.GetBytes("{}");
     private readonly TestingApplication _testingApplication;
     private readonly CancellationTokenSource _stopListener = new();
+    private readonly string[]? _idFilter;
     private HttpListener? _listener;
     private Task? _connectionLoop;
-    private string[]? _idFilter;
 
     public event EventHandler<OnMessageEventArgs>? OnMessage;
 

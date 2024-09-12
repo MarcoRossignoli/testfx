@@ -16,8 +16,8 @@ internal class HttpServerConsumer : IPushOnlyProtocolConsumer
     private readonly HttpServer _httpServer;
     private readonly Uri _uri;
     private readonly IMessageFormatter _messageFormatter = FormatterUtilities.CreateFormatter();
-    private HttpClient? _httpClient;
-    private ICommandLineOptions _commandLineOptions;
+    private readonly HttpClient? _httpClient;
+    private readonly ICommandLineOptions _commandLineOptions;
 
     public HttpServerConsumer(HttpServer httpServer, Uri uri, HttpClient? httpClient, ICommandLineOptions commandLineOptions)
     {

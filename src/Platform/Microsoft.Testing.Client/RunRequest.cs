@@ -12,7 +12,7 @@ public sealed class RunRequest
     private readonly string _executable;
     private readonly TestingApplication _testingApplication;
     private readonly TaskCompletionSource<int> _completionSource = new();
-    private string[]? _idFilter;
+    private readonly string[]? _idFilter;
 
     public event EventHandler<RanTestsEventArgs>? RanTests;
 
@@ -96,7 +96,11 @@ public sealed class RunRequest
         var psi = new ProcessStartInfo
         {
             FileName = _executable,
+#if NETCOREAPP
+            Arguments = $"--server http --http-hostname {hostName} --exit-on-process-exit {Environment.ProcessId}",
+#else
             Arguments = $"--server http --http-hostname {hostName} --exit-on-process-exit {Process.GetCurrentProcess()!.Id!}",
+#endif
             UseShellExecute = false,
             CreateNoWindow = true,
         };
