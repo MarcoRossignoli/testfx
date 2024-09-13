@@ -7,7 +7,7 @@ public class EntryPoint
 {
     public static async Task Main(string[] args)
     {
-        var testApp = new TestingApplication(@"C:\git\testfx\artifacts\bin\Playground\Debug\net8.0\Playground.exe")
+        var testApp = new TestingApplication(@"C:\git\localPlayground\Contoso.Tests\bin\Debug\net8.0\Contoso.Tests.exe")
         {
             EnableLogging = true,
             EnableMessagesLogging = false,
@@ -86,9 +86,38 @@ public class EntryPoint
         };
         // Execute
         cancelRequest.Execute();
-        Thread.Sleep(2000);
+        Thread.Sleep(1000);
         cancelRequest.Cancel();
         // Wait for completion
         Console.WriteLine($"ExitCode: {await cancelRequest.WaitCompletionAsync().ConfigureAwait(false)}");
+
+        // ============ Hot Reload - dotnet watch ============
+        Console.WriteLine("============ Hot Reload - dotnet watch ============");
+
+        testApp = new TestingApplication(@"C:\git\localPlayground\Contoso.Tests\Contoso.Tests.csproj")
+        {
+            EnableLogging = false,
+            EnableMessagesLogging = false,
+        };
+        testApp.LogReceived += (sender, e) => Console.WriteLine(e.Log);
+        testApp.LogMessageReceived += (sender, e) => Console.WriteLine(e.Message);
+
+        RunRequest runHotReloadRequest = testApp.CreateRunRequest(hotReload: true);
+        runHotReloadRequest.RanTests += (sender, e) =>
+        {
+            foreach (TestNode node in e.RanNodes)
+            {
+                Console.WriteLine($"Ran node - {node.Node!.Uid} {node.Node!.DisplayName} {node.Node!.ExecutionState}");
+                if (node.Node!.ExecutionState == "failed")
+                {
+                    Console.WriteLine($"Error message: {node.Node!.ErrorMessage}\n{node.Node!.ErrorStacktrace}");
+                }
+            }
+        };
+        // Execute
+        runHotReloadRequest.Execute();
+
+        // Wait for completion
+        Console.WriteLine($"ExitCode: {await runHotReloadRequest.WaitCompletionAsync().ConfigureAwait(false)}");
     }
 }

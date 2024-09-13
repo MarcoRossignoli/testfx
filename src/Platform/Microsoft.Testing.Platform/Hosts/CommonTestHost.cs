@@ -37,7 +37,6 @@ internal abstract class CommonTestHost(ServiceProvider serviceProvider) : ITestH
 
             try
             {
-
                 RoslynDebug.Assert(PushOnlyProtocol is not null);
 
                 ITestApplicationModuleInfo testApplicationModuleInfo = serviceProvider.GetTestApplicationModuleInfo();

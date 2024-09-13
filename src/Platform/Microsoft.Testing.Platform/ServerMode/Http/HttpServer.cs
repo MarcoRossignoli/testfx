@@ -111,6 +111,11 @@ internal class HttpServer : IPushOnlyProtocol
         }
 
         await _httpClient!.GetStringAsync(new Uri(new Uri(_httpHost!), "exit")).ConfigureAwait(false);
+
+        RoslynDebug.Assert(_cancellationTokenTask != null, "The cancellationTokenTask should not be null.");
+
+        using CancellationTokenSource cancellationTokenSource = new(TimeoutHelper.DefaultHangTimeSpanTimeout);
+        await _cancellationTokenTask.WithCancellationAsync(cancellationTokenSource.Token);
     }
 
     public Task HelpInvokedAsync() => throw new NotImplementedException();

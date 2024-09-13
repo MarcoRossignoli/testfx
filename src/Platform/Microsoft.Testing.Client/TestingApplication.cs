@@ -5,7 +5,7 @@ namespace Microsoft.Testing.Client;
 
 public class TestingApplication
 {
-    private readonly string _executable;
+    private readonly string _executableOrProjectFile;
 
     public string Id { get; } = Guid.NewGuid().ToString("N");
 
@@ -17,13 +17,13 @@ public class TestingApplication
 
     public event EventHandler<LogMessageEventArgs>? LogMessageReceived;
 
-    public TestingApplication(string executable) => _executable = executable;
+    public TestingApplication(string executableOrProjectFile) => _executableOrProjectFile = executableOrProjectFile;
 
     public DiscoveryRequest CreateDiscoveryRequest()
-        => new(_executable, this);
+        => new(_executableOrProjectFile, this);
 
-    public RunRequest CreateRunRequest(string[]? idFilter = null)
-        => new(_executable, idFilter, this);
+    public RunRequest CreateRunRequest(string[]? idFilter = null, bool hotReload = false)
+        => new(_executableOrProjectFile, idFilter, hotReload, this);
 
     internal void Log(string message)
     {

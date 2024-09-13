@@ -207,7 +207,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Testing.Extension
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Testing.Platform.MSBuild.UnitTests", "test\UnitTests\Microsoft.Testing.Platform.MSBuild.UnitTests\Microsoft.Testing.Platform.MSBuild.UnitTests.csproj", "{F422398C-72CD-43EA-AC8E-E0DBD08E5563}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Testing.Client", "src\Platform\Microsoft.Testing.Client\Microsoft.Testing.Client.csproj", "{35DC6FF0-9067-4772-9CC0-CD2B02513035}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Testing.Client", "src\Platform\Microsoft.Testing.Client\Microsoft.Testing.Client.csproj", "{35DC6FF0-9067-4772-9CC0-CD2B02513035}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -12,13 +12,13 @@ namespace Playground;
 [TestClass]
 public class TestClass
 {
-    public TestContext TestContext { get; set; }
+    public TestContext? TestContext { get; set; }
 
     [TestMethod]
     public void Test() => Assert.AreEqual(1, 2);
 
     [TestMethod]
-    public async Task Test2() => await Task.Delay(TimeSpan.FromSeconds(10), TestContext.CancellationTokenSource.Token);
+    public async Task Test2() => await Task.Delay(TimeSpan.FromSeconds(10), TestContext!.CancellationTokenSource.Token);
 
     [TestMethod]
     public void Test3()

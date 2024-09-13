@@ -212,5 +212,16 @@ internal sealed class SystemConsole : IConsole
 #pragma warning restore IDE0022 // Use expression body for method
     }
 
-    public void Clear() => Console.Clear();
+    public void Clear()
+    {
+        try
+        {
+            Console.Clear();
+        }
+        catch (IOException)
+        {
+            // https://learn.microsoft.com/en-us/dotnet/api/system.console.clear?view=net-8.0#remarks
+            // Ignore exceptions when the output is redirected
+        }
+    }
 }

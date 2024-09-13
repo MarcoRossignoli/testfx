@@ -10,10 +10,11 @@ namespace Microsoft.Testing.Client;
 
 public sealed class RunRequest
 {
-    private readonly string _executable;
+    private readonly string _executableOrProject;
     private readonly TestingApplication _testingApplication;
     private readonly TaskCompletionSource<int> _completionSource = new();
     private readonly string[]? _idFilter;
+    private readonly bool _hotReload;
     private readonly ConcurrentBag<OnCancellationTokenEventArgs> _cancellationTokens = new();
     private readonly object _cancelLock = new();
     private bool _cancelled;
@@ -22,14 +23,15 @@ public sealed class RunRequest
 
     internal RunRequest(string executable, TestingApplication testingApplication)
     {
-        _executable = executable;
+        _executableOrProject = executable;
         _testingApplication = testingApplication;
     }
 
-    public RunRequest(string executable, string[]? idFilter, TestingApplication testingApplication)
+    public RunRequest(string executableOrProject, string[]? idFilter, bool hotReload, TestingApplication testingApplication)
     {
-        _executable = executable;
+        _executableOrProject = executableOrProject;
         _idFilter = idFilter;
+        _hotReload = hotReload;
         _testingApplication = testingApplication;
     }
 
@@ -132,17 +134,38 @@ public sealed class RunRequest
 
     private ProcessStartInfo GetProcessStartInfo(string hostName)
     {
-        var psi = new ProcessStartInfo
+        ProcessStartInfo psi;
+        if (_hotReload)
         {
-            FileName = _executable,
+            psi = new ProcessStartInfo
+            {
+                FileName = @"dotnet",
 #if NETCOREAPP
-            Arguments = $"--server http --http-hostname {hostName} --exit-on-process-exit {Environment.ProcessId}",
+                Arguments = $"watch -- --server http --http-hostname {hostName} --exit-on-process-exit {Environment.ProcessId}",
 #else
-            Arguments = $"--server http --http-hostname {hostName} --exit-on-process-exit {Process.GetCurrentProcess()!.Id!}",
+                Arguments = $"watch -- --server http --http-hostname {hostName} --exit-on-process-exit {Process.GetCurrentProcess()!.Id!}",
 #endif
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(_executableOrProject)!,
+            };
+
+            // psi.Environment["TESTINGPLATFORM_LAUNCH_ATTACH_DEBUGGER"] = "1";
+        }
+        else
+        {
+            psi = new ProcessStartInfo
+            {
+                FileName = _executableOrProject,
+#if NETCOREAPP
+                Arguments = $"--server http --http-hostname {hostName} --exit-on-process-exit {Environment.ProcessId}",
+#else
+                Arguments = $"--server http --http-hostname {hostName} --exit-on-process-exit {Process.GetCurrentProcess()!.Id!}",
+#endif
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+        }
 
         return psi;
     }
