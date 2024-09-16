@@ -4,7 +4,7 @@
     <TargetFrameworks>netstandard2.0;$(MicrosoftTestingTargetFrameworks)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <OutputType>Exe</OutputType>
+    <OutputType Condition=" '$(Configuration)' != 'Release'" >Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
