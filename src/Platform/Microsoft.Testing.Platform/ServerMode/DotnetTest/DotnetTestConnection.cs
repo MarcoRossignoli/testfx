@@ -142,7 +142,7 @@ internal sealed class DotnetTestConnection : IPushOnlyProtocol,
         }
     }
 
-    public Task OnExitAsync() => Task.CompletedTask;
+    public Task OnExitAsync(int _) => Task.CompletedTask;
 
     public void Dispose() => _dotnetTestPipeClient?.Dispose();
 

@@ -81,11 +81,20 @@ public sealed class RunRequest
                     }
                 };
 
+                Process? process = null;
+                int? exitCode = 0;
+
                 httpServer.OnExit += (sender, e) =>
                 {
                     foreach (OnCancellationTokenEventArgs cancellation in _cancellationTokens)
                     {
                         cancellation.CloseTheRequest();
+                    }
+
+                    exitCode = e.ExitCode;
+                    if (_hotReload)
+                    {
+                        process!.Kill();
                     }
                 };
 
@@ -93,7 +102,7 @@ public sealed class RunRequest
                 _testingApplication.Log($"Starting {processStart.FileName} {processStart.Arguments}");
                 processStart.RedirectStandardOutput = true;
                 processStart.RedirectStandardError = true;
-                var process = Process.Start(processStart);
+                process = Process.Start(processStart)!;
                 process!.BeginErrorReadLine();
                 process!.BeginOutputReadLine();
 
@@ -122,7 +131,7 @@ public sealed class RunRequest
                 // Dispose the server
                 httpServer.Dispose();
 
-                _completionSource.SetResult(process.ExitCode);
+                _completionSource.SetResult(exitCode.Value);
             }
             catch (Exception ex)
             {
@@ -165,6 +174,8 @@ public sealed class RunRequest
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
+
+            // psi.Environment["TESTINGPLATFORM_LAUNCH_ATTACH_DEBUGGER"] = "1";
         }
 
         return psi;

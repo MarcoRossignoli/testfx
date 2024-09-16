@@ -23,7 +23,10 @@ internal class HttpServer : IPushOnlyProtocol
     private string? _httpHost;
     private Task? _cancellationTokenTask;
 
-    public HttpServer(ICommandLineOptions commandLineOptions, ServiceProvider serviceProvider, ITestApplicationCancellationTokenSource testApplicationCancellationTokenSource)
+    public HttpServer(
+        ICommandLineOptions commandLineOptions,
+        ServiceProvider serviceProvider,
+        ITestApplicationCancellationTokenSource testApplicationCancellationTokenSource)
     {
         _commandLineOptions = commandLineOptions;
         _serviceProvider = serviceProvider;
@@ -103,14 +106,14 @@ internal class HttpServer : IPushOnlyProtocol
         return true;
     }
 
-    public async Task OnExitAsync()
+    public async Task OnExitAsync(int exitCode)
     {
         if (_commandLineOptions.IsOptionSet("--list-tests"))
         {
             return;
         }
 
-        await _httpClient!.GetStringAsync(new Uri(new Uri(_httpHost!), "exit")).ConfigureAwait(false);
+        await _httpClient!.GetStringAsync(new Uri(new Uri(_httpHost!), $"exit?exitCode={exitCode}")).ConfigureAwait(false);
 
         RoslynDebug.Assert(_cancellationTokenTask != null, "The cancellationTokenTask should not be null.");
 

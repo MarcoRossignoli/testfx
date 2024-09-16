@@ -50,7 +50,12 @@ internal abstract class CommonTestHost(ServiceProvider serviceProvider) : ITestH
             {
                 if (PushOnlyProtocol is not null)
                 {
-                    await PushOnlyProtocol.OnExitAsync();
+                    if (testApplicationCancellationToken.IsCancellationRequested)
+                    {
+                        exitCode = ExitCodes.TestSessionAborted;
+                    }
+
+                    await PushOnlyProtocol.OnExitAsync(exitCode);
                 }
             }
         }

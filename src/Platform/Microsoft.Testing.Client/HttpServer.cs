@@ -1,8 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
+using System.Web;
 
 using Newtonsoft.Json;
 
@@ -119,7 +123,7 @@ internal sealed class HttpServer : IDisposable
 
         string? action = null;
 
-        action = request.Url!.PathAndQuery switch
+        action = request.Url!.AbsolutePath switch
         {
             "/list-tests" => "list-tests",
             "/run-tests" => "run-tests",
@@ -158,7 +162,7 @@ internal sealed class HttpServer : IDisposable
         }
         else if (action == "exit")
         {
-            OnExit?.Invoke(this, new());
+            OnExit?.Invoke(this, new(int.Parse(request.QueryString["exitCode"]!, CultureInfo.InvariantCulture)));
         }
 
         HttpListenerResponse response = context.Response;
@@ -175,6 +179,9 @@ internal sealed class HttpServer : IDisposable
 
 public sealed class OnExitEventArgs : EventArgs
 {
+    public OnExitEventArgs(int exitCode) => ExitCode = exitCode;
+
+    public int ExitCode { get; }
 }
 
 public sealed class OnMessageEventArgs : EventArgs

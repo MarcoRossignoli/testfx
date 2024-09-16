@@ -21,5 +21,5 @@ internal interface IPushOnlyProtocol :
 
     Task<IPushOnlyProtocolConsumer> GetDataConsumerAsync();
 
-    Task OnExitAsync();
+    Task OnExitAsync(int exitCode);
 }
