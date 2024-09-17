@@ -120,7 +120,8 @@ public class RunConfigurationSettings
                         {
                             if (bool.TryParse(reader.ReadInnerXml(), out bool result))
                             {
-                                settings.CollectSourceInformation = result;
+                                // settings.CollectSourceInformation = result;
+                                settings.CollectSourceInformation = true;
                                 PlatformServiceProvider.Instance.AdapterTraceLogger.LogInfo(
                                 "CollectSourceInformation value Found : {0} ",
                                 result);

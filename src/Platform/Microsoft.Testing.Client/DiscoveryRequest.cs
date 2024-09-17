@@ -97,6 +97,7 @@ public sealed class DiscoveryRequest
             CreateNoWindow = true,
         };
 
+        // psi.Environment["TESTINGPLATFORM_LAUNCH_ATTACH_DEBUGGER"] = "1";
         return psi;
     }
 }

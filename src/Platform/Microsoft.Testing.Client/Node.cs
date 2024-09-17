@@ -39,4 +39,13 @@ public class Node
 
     [JsonProperty("time.durationms")]
     public float TimeDurationMs { get; set; }
+
+    [JsonProperty("location.file")]
+    public string? FileLocation { get; set; }
+
+    [JsonProperty("location.line-start")]
+    public string? LocationLineStart { get; set; }
+
+    [JsonProperty("location.line-end")]
+    public string? LocationLineEnd { get; set; }
 }
