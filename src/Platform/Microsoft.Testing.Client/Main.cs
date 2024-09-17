@@ -118,6 +118,8 @@ internal sealed class EntryPoint
         };
         // Execute
         runHotReloadRequest.Execute();
+        Thread.Sleep(10_000);
+        runHotReloadRequest.Cancel();
 
         // Wait for completion
         Console.WriteLine($"ExitCode: {await runHotReloadRequest.WaitCompletionAsync().ConfigureAwait(false)}");
