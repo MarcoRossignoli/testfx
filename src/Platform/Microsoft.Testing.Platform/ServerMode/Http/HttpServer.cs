@@ -94,7 +94,7 @@ internal class HttpServer : IPushOnlyProtocol
 #if NETCOREAPP
             string[] idFilter = JsonDocument.Parse(filterId).RootElement.EnumerateArray().Select(e => e.GetString()).ToArray()!;
 #else
-            string[] idFilter = (string[])Jsonite.Json.Deserialize(filterId, null!);
+            string[] idFilter = ((Jsonite.JsonArray)Jsonite.Json.Deserialize(filterId)).Select(x => x.ToString()).ToArray();
 #endif
 
             if (idFilter.Length > 0)
