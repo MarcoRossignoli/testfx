@@ -9,7 +9,7 @@ internal sealed class EntryPoint
     public static async Task Main(string[] _)
 #pragma warning restore VSTHRD200 // Use "Async" suffix for async methods
     {
-        var testApp = new TestingApplication(@"C:\git\localPlayground\Contoso.Tests\bin\Debug\net8.0\Contoso.Tests.exe")
+        var testApp = new TestingApplication(@"C:\git\localPlayground\Contoso.Tests\bin\Debug\net48\Contoso.Tests.exe")
         {
             EnableLogging = true,
             EnableMessagesLogging = false,

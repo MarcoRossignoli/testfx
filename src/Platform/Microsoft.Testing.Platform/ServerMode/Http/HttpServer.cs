@@ -48,6 +48,10 @@ internal class HttpServer : IPushOnlyProtocol
             _httpClient = new HttpClient();
             _httpHost = httpHost[0];
         }
+        else
+        {
+            return Task.CompletedTask;
+        }
 
         _cancellationTokenTask = Task.Run(async () =>
         {
