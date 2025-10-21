@@ -6,6 +6,7 @@ using System.ClientModel;
 using Azure.AI.OpenAI;
 
 using Microsoft.Extensions.AI;
+using Microsoft.Testing.Extensions.AzFoundry.Resources;
 using Microsoft.Testing.Platform.AI;
 
 namespace Microsoft.Testing.Extensions.AzFoundry;
@@ -24,17 +25,17 @@ public sealed class AzureOpenAIChatClientFactory : IChatClientFactory
 
         if (string.IsNullOrEmpty(endpoint))
         {
-            throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT environment variable is not set.");
+            throw new InvalidOperationException(ExtensionResources.AzureOpenAIEndpointNotSet);
         }
 
         if (string.IsNullOrEmpty(deploymentName))
         {
-            throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT_NAME environment variable is not set.");
+            throw new InvalidOperationException(ExtensionResources.AzureOpenAIDeploymentNameNotSet);
         }
 
         if (string.IsNullOrEmpty(apiKey))
         {
-            throw new InvalidOperationException("AZURE_OPENAI_API_KEY environment variable is not set.");
+            throw new InvalidOperationException(ExtensionResources.AzureOpenAIApiKeyNotSet);
         }
 
         var client = new AzureOpenAIClient(

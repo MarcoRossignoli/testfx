@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.AI;
 using Microsoft.Testing.Platform.Builder;
+using Microsoft.Testing.Platform.Resources;
 using Microsoft.Testing.Platform.Services;
 
 namespace Microsoft.Testing.Platform.AI;
@@ -17,11 +18,11 @@ public static class AIExtensions
     /// </summary>
     /// <param name="testApplicationBuilder">The test application builder.</param>
     /// <param name="chatClientFactory">The factory function to create chat client factories.</param>
-    public static void AddChatClientFactory(this ITestApplicationBuilder testApplicationBuilder, Func<IChatClientFactory> chatClientFactory)
+    public static void AddChatClientFactory(this ITestApplicationBuilder testApplicationBuilder, Func<IServiceProvider, IChatClientFactory> chatClientFactory)
     {
         if (testApplicationBuilder is not TestApplicationBuilder builder)
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException(PlatformResources.InvalidTestApplicationBuilderTypeForAI);
         }
 
         builder.ChatClientManager.AddChatClientFactory(chatClientFactory);
